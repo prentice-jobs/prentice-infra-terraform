@@ -1,6 +1,12 @@
-variable "bucket" {}
-variable "prefix" {}
-variable "credentials" {}
+variable "bucket" {
+  description = "GCS Bucket to store Terraform state"
+  type = string
+}
+
+variable "prefix" {
+  description = "Default prefix value for Terraform backend"
+  type = string
+}
 
 variable "gcp_service_key" {
   description = "GCP Service Account Key File"
@@ -15,9 +21,4 @@ variable "gcp_region" {
   description = "GCP Project Region"
   type = string
   default = "asia-southeast2" # Jakarta
-}
-
-variable "gcs_backend_bucket" {
-  description = "Cloud Storage Backend for Terraform State"
-  type = string
 }

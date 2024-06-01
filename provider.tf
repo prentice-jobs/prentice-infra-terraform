@@ -15,7 +15,7 @@ terraform {
     # Uses the backend tfvars, passed in during `terraform init`
     bucket = var.bucket
     prefix = var.prefix
-    credentials = var.credentials
+    credentials = file(var.gcp_service_key)
   }
 }
 

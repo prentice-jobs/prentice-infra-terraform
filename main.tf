@@ -1,8 +1,19 @@
 # GCP Project Service
-resource "google_project_service" "main" {
+resource "google_project_service" "secretmanager_api" {
   project = var.gcp_project_id
-  count              = length(local.services_list)
-  service            = local.services_list[count.index]
+  service = "secretmanager.googleapis.com"
+  disable_on_destroy = false
+}
+
+resource "google_project_service" "cloudrun_api" {
+  project = var.gcp_project_id
+  service = "run.googleapis.com"
+  disable_on_destroy = false
+}
+
+resource "google_project_service" "sqladmin_api" {
+  project = var.gcp_project_id
+  service = "sqladmin.googleapis.com"
   disable_on_destroy = false
 }
 
@@ -33,3 +44,44 @@ resource "google_sql_database" "prentice_db" {
   
 }
 
+
+# https://cloud.google.com/sql/docs/postgres/connect-run
+resource "google_cloud_run_v2_service" "prentice_webserver" {
+  name = "prentice-jobs-webserver-dev"
+  location = var.gcp_region
+  ingress = "INGRESS_TRAFFIC_ALL"
+  
+  template {
+    scaling {
+      max_instance_count = 4
+    }
+
+    containers {
+      image = "us-docker.pkg.dev/cloudrun/container/hello" # Change to Prentice's Docker Image
+      volume_mounts {
+        name = "cloudsql"
+        mount_path = "/cloudsql"
+      }
+      
+      resources {
+        limits = {
+          cpu    = "4"
+          memory = "4"
+        }
+      }
+    }
+
+    volumes {
+      name = "cloudsql"
+      cloud_sql_instance {
+        instances = [google_sql_database_instance.prentice_db_instance.connection_name]
+      }
+    }
+  }
+  client = "terraform"
+  depends_on = [
+    google_project_service.secretmanager_api,
+    google_project_service.cloudrun_api,
+    google_project_service.sqladmin_api
+  ]
+}
