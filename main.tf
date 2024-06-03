@@ -99,3 +99,20 @@ resource "google_cloud_run_v2_service" "prentice_webserver" {
     google_project_service.sqladmin_api
   ]
 }
+
+data "google_iam_policy" "noauth" {
+  binding {
+    role = "roles/run.invoker"
+    members = [
+      "allUsers",
+    ]
+  }
+}
+
+resource "google_cloud_run_service_iam_policy" "noauth" {
+  location    = google_cloud_run_v2_service.prentice_webserver.location
+  project     = google_cloud_run_v2_service.prentice_webserver.project
+  service     = google_cloud_run_v2_service.prentice_webserver.name
+
+  policy_data = data.google_iam_policy.noauth.policy_data
+}
