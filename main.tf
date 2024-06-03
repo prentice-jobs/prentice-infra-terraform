@@ -17,12 +17,26 @@ resource "google_project_service" "sqladmin_api" {
   disable_on_destroy = false
 }
 
-resource "google_compute_network" "prentice_vpc" {
-  project = var.gcp_project_id
-  name = "prentice-jobs-vpc-dev"
-  auto_create_subnetworks = true
+# DEVOPS
+resource "google_artifact_registry_repository" "prentice-registry" {
+  location = "asia-southeast2" # Jakarta
+  repository_id = "prentice-jobs-registry-dev"
+  description = "Prentice Jobs Web Server Registry"
+  format = "DOCKER"
+
+  labels = {
+    environment = "dev"
+  }
 }
 
+# VPC
+# resource "google_compute_network" "prentice_vpc" {
+#   project = var.gcp_project_id
+#   name = "prentice-jobs-vpc-dev"
+#   auto_create_subnetworks = true
+# }
+
+# DATABASES
 resource "google_sql_database_instance" "prentice_db_instance" {
   project = var.gcp_project_id
   name = "prentice-jobs-db-instance-dev"
@@ -44,8 +58,9 @@ resource "google_sql_database" "prentice_db" {
   
 }
 
-
+# COMPUTE
 # https://cloud.google.com/sql/docs/postgres/connect-run
+# v1 documentation - https://stackoverflow.com/questions/57885584/cannot-deploy-public-api-on-cloud-run-using-terraform
 resource "google_cloud_run_v2_service" "prentice_webserver" {
   name = "prentice-jobs-webserver-dev"
   location = var.gcp_region
@@ -65,8 +80,7 @@ resource "google_cloud_run_v2_service" "prentice_webserver" {
       
       resources {
         limits = {
-          cpu    = "4"
-          memory = "4"
+          cpu    = "1"
         }
       }
     }
