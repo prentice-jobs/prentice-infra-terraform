@@ -1,21 +1,7 @@
-# GCP Project Service
-resource "google_project_service" "secretmanager_api" {
-  project = var.gcp_project_id
-  service = "secretmanager.googleapis.com"
-  disable_on_destroy = false
-}
-
-resource "google_project_service" "cloudrun_api" {
-  project = var.gcp_project_id
-  service = "run.googleapis.com"
-  disable_on_destroy = false
-}
-
-resource "google_project_service" "sqladmin_api" {
-  project = var.gcp_project_id
-  service = "sqladmin.googleapis.com"
-  disable_on_destroy = false
-}
+/** TODO 
+  1. refactoring into modules, if time allows
+  2. Setup VPC properly
+*/
 
 # DEVOPS
 resource "google_artifact_registry_repository" "prentice-registry" {
@@ -35,6 +21,31 @@ resource "google_artifact_registry_repository" "prentice-registry" {
 #   name = "prentice-jobs-vpc-dev"
 #   auto_create_subnetworks = true
 # }
+
+# STORAGE
+resource "google_storage_bucket" "prentice_bucket_offer_letter_dev" {
+  name = var.project_gcs_bucket_offer_letter
+  location = var.project_gcs_bucket_region
+  force_destroy = false # DO NOT delete user data when destroying Terraform Infrastructure
+
+  uniform_bucket_level_access = var.project_gcs_uniform_bucket_access
+
+  soft_delete_policy {
+    retention_duration_seconds = var.project_gcs_retention_seconds
+  }
+}
+
+resource "google_storage_bucket" "prentice_bucket_stopwords_dev" {
+  name = var.project_gcs_bucket_stopwords
+  location = var.project_gcs_bucket_region
+  force_destroy = false
+
+  uniform_bucket_level_access = var.project_gcs_uniform_bucket_access
+
+  soft_delete_policy {
+    retention_duration_seconds = var.project_gcs_retention_seconds
+  }
+}
 
 # DATABASES
 resource "google_sql_database_instance" "prentice_db_instance" {
@@ -72,7 +83,8 @@ resource "google_cloud_run_v2_service" "prentice_webserver" {
     }
 
     containers {
-      image = "us-docker.pkg.dev/cloudrun/container/hello" # Change to Prentice's Docker Image
+      name = "webserver"
+      image = var.CLOUD_RUN_CONTAINER_PATH # Change to Prentice's Docker Image
       volume_mounts {
         name = "cloudsql"
         mount_path = "/cloudsql"
@@ -81,7 +93,43 @@ resource "google_cloud_run_v2_service" "prentice_webserver" {
       resources {
         limits = {
           cpu    = "1"
+          memory = "2Gi"
         }
+      }
+
+      env {
+        name = "ENV"
+        value = var.ENV
+      }
+
+      env {
+        name = "POSTGRES_DB_PORT"
+        value = var.POSTGRES_DB_PORT
+      }
+
+      env {
+        name = "POSTGRES_DB_HOST"
+        value = var.POSTGRES_DB_HOST
+      }
+
+      env {
+        name = "POSTGRES_DB_NAME"
+        value = var.POSTGRES_DB_NAME
+      }
+
+      env {
+        name = "POSTGRES_DB_USER"
+        value = var.POSTGRES_DB_USER
+      }
+
+      env {
+        name = "POSTGRES_DB_PASSWORD"
+        value = var.POSTGRES_DB_PASSWORD
+      }
+
+      env {
+        name = "GCS_BUCKET_PRENTICE"
+        value = var.GCS_BUCKET_PRENTICE
       }
     }
 
@@ -93,11 +141,6 @@ resource "google_cloud_run_v2_service" "prentice_webserver" {
     }
   }
   client = "terraform"
-  depends_on = [
-    google_project_service.secretmanager_api,
-    google_project_service.cloudrun_api,
-    google_project_service.sqladmin_api
-  ]
 }
 
 data "google_iam_policy" "noauth" {
