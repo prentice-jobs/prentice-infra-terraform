@@ -128,8 +128,13 @@ resource "google_cloud_run_v2_service" "prentice_webserver" {
       }
 
       env {
-        name = "GCS_BUCKET_PRENTICE"
-        value = var.GCS_BUCKET_PRENTICE
+        name = "GCS_BUCKET_OFFER_LETTER"
+        value = var.GCS_BUCKET_OFFER_LETTER
+      }
+
+      env {
+        name = "GCS_BUCKET_STOPWORDS"
+        value = var.GCS_BUCKET_STOPWORDS
       }
     }
 

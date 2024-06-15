@@ -68,11 +68,15 @@ variable "POSTGRES_DB_PASSWORD" {
   type = string
 }
 
-variable "GCS_BUCKET_PRENTICE" {
+variable "GCS_BUCKET_OFFER_LETTER" {
   type = string
 }
 
 variable "CLOUD_RUN_CONTAINER_PATH" {
+  type = string
+}
+
+variable "GCS_BUCKET_STOPWORDS" {
   type = string
 }
 
